@@ -1,54 +1,145 @@
-(defun sample-robot-camera ()
-  (let (r b g c1 c2)
-    (load "irteus/demo/sample-robot-model.l")
-    (setq r (instance sample-robot :init))
-    (send r :fix-leg-to-coords (make-coords))
-    (setq b (make-cube 100 100 100 :pos #f(1000 1000 1000)))
-    (send b :set-color :red)
-    (setq g (make-cube 3000 3000 1))
-    (send g :set-color :gray90)
-    (objects (list r b g))
+#!/usr/bin/env roseus
+
+(ros::roseus-add-msgs "opencv_apps")
+(ros::roseus-add-msgs "sensor_msgs")
+
+(defun callback-left (msg)
+  (setq *left-msg* msg)
+  )
+(defun callback-right (msg)
+  (setq *right-msg* msg)
+  )
+
+(setq *left-camera-info* nil)
+(setq *right-camera-info* nil)
+(defun callback-left-camerainfo (msg)
+  (setq *left-camera-info* msg))
+(defun callback-right-camerainfo (msg)
+  (setq *right-camera-info* msg))
+
+(defun calc-coordinate ()
+  (ros::roseus "calc-coordinate")
+  (ros::advertise "centroid_calc_from_stereo_image"
+                  geometry_msgs::PointStamped)
+
+  (ros::subscribe "/pointgrey/left/camera_info"
+                  sensor_msgs::camerainfo
+                  #'callback-left-camerainfo)
+  (ros::subscribe "/pointgrey/right/camera_info"
+                  sensor_msgs::camerainfo
+                  #'callback-right-camerainfo)
+
+  (let ((st (ros::time-now)))
+    (while (not (and *left-camera-info*
+                     *right-camera-info*))
+      (when (> (send (ros::time- (ros::time-now) st) :to-sec) 10.0)
+        (warn ";; timeout, camera-info not found~%")
+        (return-from calc-coordinate nil))
+      (unix::usleep (* 1000 100));; sleep 100 ms
+      (ros::spin-once)
+      )
+    )
+
+  (warn ";; found camera-info~%")
+  (let (c1 c2
+       sp1 sp2 header
+       pwidth pheight p)
+    ;(load "orbit_estimation/src/pointgrey-camera-model.l")
+    ;;(load "pointgrey-camera-model.l")
+    ;; (setq r (instance pointgrey-camera-model :init))
+    ;; (send r :fix-leg-to-coords (make-coords))
+    ;; (setq b (make-cube 100 100 100 :pos #f(1000 1000 1000)))
+    ;; (send b :set-color :red)
+    ;; (setq g (make-cube 3000 3000 1))
+    ;; (send g :set-color :gray90)
+    ;; (objects (list r b g))
 
     ;; get camera model
-    (setq c1 (send r :camera "left-camera"))
-    (setq c2 (send r :camera "right-camera"))
+    #|
+    (setq c1 (instance pointgrey-camera-model :init "left-camera"
+                       camera_info = "/pointgrey/left/camera_info"))
+    (setq c2 (instance pointgrey-camera-model :init "right-camera"
+                       camera_info = "/pointgrey/right/camera_info"))
+    (send c1 :assoc c2)
+    |#
 
-    ;; display coordinates
-    (send (send c1 :copy-worldcoords) :draw-on :flush t :size 1000)
+    (setq pwidth (send *left-camera-info* :width))
+    (setq pheight (send *left-camera-info* :height))
+    (setq p (send *left-camera-info* :P))
+    (setq c1 (make-camera-from-ros-camera-info-aux pwidth pheight p nil))
 
-    ;; display view
-    (send c1 :draw-on :flush t)
+    (setq pwidth (send *right-camera-info* :width))
+    (setq pheight (send *right-camera-info* :height))
+    (setq p (send *right-camera-info* :P))
+    (setf (elt p 3)
+          (* (/ (elt p 3) (elt p 0)) 1000.0))
+    (setq c2 (make-camera-from-ros-camera-info-aux pwidth pheight p nil))
 
-    ;; get view angle
-    (format t "view-angle ~A [deg]~%" (rad2deg (send c1 :viewing :view-angle)))
+    (send c1 :assoc c2)
 
-    ;; display view image
-    (send c1 :draw-objects (list b g))
-    ;; save view image
-    (image::write-png-file "camera-image.png" (send c1 :get-image))
+    (ros::subscribe "/left_opencv_centroid/centroid"
+                    opencv_apps::Point2DStamped
+                    #'callback-left)
 
-    ;; git object position in image coordinates
-    (setq sp1 (send c1 :screen-point (send b :worldpos)))
-    (format t "screen point ~A (left)~%" sp1)
+    (ros::subscribe "/right_opencv_centroid/centroid"
+                    opencv_apps::Point2DStamped
+                    #'callback-right)
 
-    ;; get ray of found objects
-    (setq r1 (send c1 :ray (elt sp1 0) (elt sp1 1)))
-    (setq l1 (make-line (send c1 :worldpos) (v+ (send c1 :worldpos) (scale 2000 r1))))
-    (send l1 :draw-on :flush t)
-    (objects l1)
-    (format t "r1 ~A (left)~%" r1)
+    (while (ros::ok)
 
-    ;; stereo proceessing
-    (setq sp2 (send c2 :screen-point (send b :worldpos))) ;; get image coordinates
-    (setq r2 (send c1 :ray (elt sp2 0) (elt sp2 1)))        ;; get ray
-    (setq l2 (make-line (send c2 :worldpos) (v+ (send c2 :worldpos) (scale 2000 r2)))) ;; make line
-    (objects l2)
-    (send l1 :common-perpendicular l2) ;; end-points of the line vertical both to l1 and l2
-    (setq p (apply #'midpoint 0.5 (send l1 :common-perpendicular l2)))
-    ;;
-    (format t "p ~A (left)~%" p)
-    (format t "check  stereo processing ~A~%" (eps-v= (send b :worldpos) p)) ;; check
-    ))
+      ;; get object position in image coordinates
+      (setq *left-msg* nil)
+      (setq *right-msg* nil)
+      (ros::spin-once)
 
-(warn ";; run demo program~%")
-(warn "(sample-robot-camera)~%")
+      (when (or *left-msg* *right-msg*)
+        (if *left-msg*
+            (setq sp1 *left-msg*))
+        (if *right-msg*
+            (setq sp2 *right-msg*))
+        ;;calc mean_y
+        (when (and sp1 sp2)
+          (setq mean_y (+ (send sp1 :point :y) (send sp2 :point :y)))
+          (when (c-isnan mean_y)
+            ;;
+            )
+          (setq header (send sp1 :header))
+          (send sp1 :point :y mean_y)
+          (send sp2 :point :y mean_y)
+
+          (setq sp1 (float-vector (send sp1 :point :x)
+                                  (send sp1 :point :y)))
+          (setq sp2 (float-vector (send sp2 :point :x)
+                                  (send sp2 :point :y)))
+          (pprint (list sp1 sp2))
+          ;; get ray of found objects
+          (setq r1 (send c1 :ray (elt sp1 0) (elt sp1 1)))
+          (setq l1 (make-line (send c1 :worldpos) (v+ (send c1 :worldpos) (scale 5000 r1))))
+          (setq r2 (send c2 :ray (elt sp2 0) (elt sp2 1)))        ;; get ray
+          (setq l2 (make-line (send c2 :worldpos) (v+ (send c2 :worldpos) (scale 5000 r2)))) ;; make line
+
+          (let ((ln (send l1 :common-perpendicular l2))) ;; end-points of the line vertical both to l1 and l2
+            (unless (eq ln :parallel)
+              (setq p (apply #'midpoint 0.5
+                             (send l1 :common-perpendicular l2)))
+              (pprint p)
+              (setq msg (instance geometry_msgs::PointStamped :init
+                                  :header header
+                                  :point
+                                  (instance geometry_msgs::Point :init
+                                            :x (elt p 0)
+                                            :y (elt p 1)
+                                            :z (elt p 2))))
+              (ros::publish "centroid_calc_from_stereo_image" msg)
+              ))
+          (setq sp1 nil)
+          (setq sp2 nil)
+          )
+        )
+      (unix::usleep (* 1000 10));; 30ms
+      )
+    )
+  )
+
+;(warn ";; run demo program~%")
+(warn "(calc-coordinate)~%")
