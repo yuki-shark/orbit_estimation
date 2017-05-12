@@ -44,24 +44,6 @@
   (let (c1 c2
        sp1 sp2 header
        pwidth pheight p)
-    ;(load "orbit_estimation/src/pointgrey-camera-model.l")
-    ;;(load "pointgrey-camera-model.l")
-    ;; (setq r (instance pointgrey-camera-model :init))
-    ;; (send r :fix-leg-to-coords (make-coords))
-    ;; (setq b (make-cube 100 100 100 :pos #f(1000 1000 1000)))
-    ;; (send b :set-color :red)
-    ;; (setq g (make-cube 3000 3000 1))
-    ;; (send g :set-color :gray90)
-    ;; (objects (list r b g))
-
-    ;; get camera model
-    #|
-    (setq c1 (instance pointgrey-camera-model :init "left-camera"
-                       camera_info = "/pointgrey/left/camera_info"))
-    (setq c2 (instance pointgrey-camera-model :init "right-camera"
-                       camera_info = "/pointgrey/right/camera_info"))
-    (send c1 :assoc c2)
-    |#
 
     (setq pwidth (send *left-camera-info* :width))
     (setq pheight (send *left-camera-info* :height))
@@ -111,7 +93,7 @@
                                   (send sp1 :point :y)))
           (setq sp2 (float-vector (send sp2 :point :x)
                                   (send sp2 :point :y)))
-          (pprint (list sp1 sp2))
+          ;;(pprint (list sp1 sp2))
           ;; get ray of found objects
           (setq r1 (send c1 :ray (elt sp1 0) (elt sp1 1)))
           (setq l1 (make-line (send c1 :worldpos) (v+ (send c1 :worldpos) (scale 5000 r1))))
@@ -122,7 +104,7 @@
             (unless (eq ln :parallel)
               (setq p (apply #'midpoint 0.5
                              (send l1 :common-perpendicular l2)))
-              (pprint p)
+              ;(pprint p)
               (setq msg (instance geometry_msgs::PointStamped :init
                                   :header header
                                   :point
@@ -136,7 +118,7 @@
           (setq sp2 nil)
           )
         )
-      (unix::usleep (* 1000 10));; 30ms
+      (unix::usleep (* 1000 10));; 10ms
       )
     )
   )
