@@ -1,5 +1,7 @@
 #!/usr/bin/env roseus
 
+;(load "package://roseus/euslisp/roseus-utils.l")
+
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
 
@@ -24,10 +26,10 @@
 
   (ros::subscribe "/pointgrey/left/camera_info"
                   sensor_msgs::camerainfo
-                  #'callback-left-camerainfo)
+                  #'callback-left-camerainfo 1)
   (ros::subscribe "/pointgrey/right/camera_info"
                   sensor_msgs::camerainfo
-                  #'callback-right-camerainfo)
+                  #'callback-right-camerainfo 1)
 
   (let ((st (ros::time-now)))
     (while (not (and *left-camera-info*
@@ -41,8 +43,8 @@
     )
 
   (warn ";; found camera-info~%")
-  (let (c1 c2
-       sp1 sp2 header
+  (let (c1 c2 left_m right_m
+       sp1 sp2 header max
        pwidth pheight p)
 
     (setq pwidth (send *left-camera-info* :width))
@@ -59,12 +61,12 @@
 
     (send c1 :assoc c2)
 
-    (ros::subscribe "/left_opencv_centroid/centroid"
-                    opencv_apps::Point2DStamped
+    (ros::subscribe "/left_opencv_centroid/moments"
+                    opencv_apps::MomentArrayStamped
                     #'callback-left)
 
-    (ros::subscribe "/right_opencv_centroid/centroid"
-                    opencv_apps::Point2DStamped
+    (ros::subscribe "/right_opencv_centroid/moments"
+                    opencv_apps::MomentArrayStamped
                     #'callback-right)
 
     (while (ros::ok)
@@ -76,9 +78,44 @@
 
       (when (or *left-msg* *right-msg*)
         (if *left-msg*
-            (setq sp1 *left-msg*))
+            (setq left_m *left-msg*))
         (if *right-msg*
-            (setq sp2 *right-msg*))
+            (setq right_m *right-msg*))
+        (print ";; msg received~%")
+        ;calc centroid from left_m and right_m
+        ; :length *****
+        ;(print "slots")
+        ;(print (send left_m :slots))
+        ;(print "moments")
+        ;(print (send left_m :moments))
+        ;; (print-ros-msg left_m)
+        ;; (send left_m :methods)
+        ;; (print-ros-msg left_m :ro ros::moments)
+        ;; (print (send left_m :moments :area))
+        ;; (setq left_len (length (send left_m :moments)))
+        (setq max 0)
+        ;; (print ";; left_len= ~A ~%" left_len)
+        (setq left_len (length (send left_m :moments)))
+        (print left_len)
+
+        ;(print (send (nth 1 (send left_m :moments)) :area))
+        (dotimes (i left_len)
+          (when (> (send (nth i (send left_m :moments)):area) max)
+            (setq max (send (nth i (send left_m :moments)):area))))
+        (setq sp1 (send (nth max (send left_m :moments)) :center))
+
+        (print "sp1")
+        (print sp1)
+
+        (setq max 0)
+        (setq right_len (length (send right_m :moments)))
+
+        ;(print (send (nth 1 (send right_m :moments)) :area))
+        (dotimes (i right_len)
+          (when (> (send (nth i (send right_m :moments)):area) max)
+            (setq max (send (nth i (send right_m :moments)):area))))
+        (setq sp2 (send (nth max (send right_m :moments)) :center))
+
         ;;calc mean_y
         (when (and sp1 sp2)
           (setq mean_y (+ (send sp1 :point :y) (send sp2 :point :y)))
@@ -125,3 +162,4 @@
 
 ;(warn ";; run demo program~%")
 (warn "(calc-coordinate)~%")
+(calc-coordinate)
