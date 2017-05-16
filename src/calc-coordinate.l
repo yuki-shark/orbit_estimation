@@ -43,8 +43,8 @@
     )
 
   (warn ";; found camera-info~%")
-  (let (c1 c2 left_m right_m
-       sp1 sp2 header max
+  (let (c1 c2 left_m right_m left_len right_len
+       sp1 sp2 header max max_num
        pwidth pheight p)
 
     (setq pwidth (send *left-camera-info* :width))
@@ -82,49 +82,62 @@
         (if *right-msg*
             (setq right_m *right-msg*))
         (print ";; msg received~%")
+
         ;calc centroid from left_m and right_m
-        ; :length *****
-        ;(print "slots")
-        ;(print (send left_m :slots))
-        ;(print "moments")
-        ;(print (send left_m :moments))
-        ;; (print-ros-msg left_m)
-        ;; (send left_m :methods)
-        ;; (print-ros-msg left_m :ro ros::moments)
-        ;; (print (send left_m :moments :area))
-        ;; (setq left_len (length (send left_m :moments)))
-        (setq max 0)
-        ;; (print ";; left_len= ~A ~%" left_len)
-        (setq left_len (length (send left_m :moments)))
-        (print left_len)
 
-        ;(print (send (nth 1 (send left_m :moments)) :area))
-        (dotimes (i left_len)
-          (when (> (send (nth i (send left_m :moments)):area) max)
-            (setq max (send (nth i (send left_m :moments)):area))))
-        (setq sp1 (send (nth max (send left_m :moments)) :center))
+        (when left_m
+          (setq max 0)
+          (setq max_num 0)
+          (setq left_len (length (send left_m :moments)))
 
-        (print "sp1")
-        (print sp1)
+          (dotimes (i left_len)
+            (when (> (send (nth i (send left_m :moments)) :area) max)
+              (setq max (send (nth i (send left_m :moments)) :area))
+              (setq max_num i)))
 
-        (setq max 0)
-        (setq right_len (length (send right_m :moments)))
+          (setq sp1 (instance opencv_apps::Point2DStamped :init
+                              :point
+                              (send (nth max_num (send left_m :moments)) :center)))
+          (print "sp1")
+          (print (send (nth max_num (send left_m :moments)) :center :x))
+          (print (send sp1 :point :x))
+          (print (send (nth max_num (send left_m :moments)) :center :y))
+          (print (send sp1 :point :y))
+        )
 
-        ;(print (send (nth 1 (send right_m :moments)) :area))
-        (dotimes (i right_len)
-          (when (> (send (nth i (send right_m :moments)):area) max)
-            (setq max (send (nth i (send right_m :moments)):area))))
-        (setq sp2 (send (nth max (send right_m :moments)) :center))
+        (when right_m
+          (setq max 0)
+          (setq max_num 0)
+          (setq right_len (length (send right_m :moments)))
+
+          (dotimes (i right_len)
+            (when (> (send (nth i (send right_m :moments)) :area) max)
+              (setq max (send (nth i (send right_m :moments)) :area))
+              (setq max_num i)))
+
+          (setq sp2 (instance opencv_apps::Point2DStamped :init
+                              :point
+                              (send (nth max_num (send right_m :moments)) :center)))
+
+          (print "sp2")
+          (print (send (nth max_num (send right_m :moments)) :center :x))
+          (print (send sp2 :point :x))
+          (print (send (nth max_num (send right_m :moments)) :center :y))
+          (print (send sp2 :point :y))
+          (print "")
+        )
 
         ;;calc mean_y
         (when (and sp1 sp2)
           (setq mean_y (+ (send sp1 :point :y) (send sp2 :point :y)))
           (when (c-isnan mean_y)
             ;;
-            )
+          )
           (setq header (send sp1 :header))
           (send sp1 :point :y mean_y)
           (send sp2 :point :y mean_y)
+          (print (send sp1 :point :y))
+          (print (send sp2 :point :y))
 
           (setq sp1 (float-vector (send sp1 :point :x)
                                   (send sp1 :point :y)))
