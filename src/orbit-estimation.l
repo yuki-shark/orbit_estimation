@@ -53,17 +53,6 @@
                   geometry_msgs::PointStamped
                   #'callback-coordinate 1)
 
-  ;; (let ((st (ros::time-now)))
-  ;;   (while (not *coordinate-msg*)
-  ;;     (when (> (send (ros::time- (ros::time-now) st) :to-sec) 10.0)
-  ;;       (warn ";; timeout, coordinate-msg not found~%")
-  ;;       (return-from calc-coordinate nil))
-  ;;     (unix::usleep (* 1000 100));; sleep 100 ms
-  ;;     (ros::spin-once)
-  ;;     )
-  ;;   )
-
-  ;; (warn ";; found coordinate-msg~%")
   (let (x-list y-list z-list coordinate tmp)
 
     (setq x-list (list ))
@@ -113,7 +102,6 @@
                               :z *z-param*))
           (ros::publish "hit_point" msg)
 
-          ;; (setq sp1 nil)
           (setq coordinate nil)
           )
         )
