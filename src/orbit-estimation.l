@@ -3,7 +3,7 @@
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
 
-(setq *z-param* 10)
+(setq *z-param* 100)
 
 (defun callback-coordinate (msg)
   (setq *coordinate-msg* msg)
@@ -18,7 +18,7 @@
                   geometry_msgs::PointStamped
                   #'callback-coordinate 1)
 
-  (let (x-list y-list z-list coordinate tmp)
+  (let (x-list y-list z-list z-x-list coordinate tmp uv)
 
     (setq x-list (list ))
     (setq y-list (list ))
@@ -61,11 +61,32 @@
           (print "estimate-x")
           (print est-x)
 
-          (setq meet_zx (sqrt (+ (* *z-param* *z-param*) (* est-x est-x))))
+          (setq st-x (cadr z-x_regressionline))
+          (setq st-z 0)
+          (setq uv (list 0.0 0.0))
+          (setf (elt uv 0) (sqrt (/ 1 (+ 1 (* (car z-x_regressionline) (car z-x_regressionline))))))
+          (setf (elt uv 1) (sqrt (- 1 (* (elt uv 0) (elt uv 0)))))
 
-          (setq z-x-list (listsqrt (listsum (listcross x-list x-list) (listcross z-list z-list))))
+          (print "uv")
+          (print uv)
+
+          (setq z-x-list (list ))
+          (dotimes (i (length x-list))
+            (push 0.0 z-x-list))
+
+          (dotimes (i (length x-list))
+            ;(setq tmp-v (list (- (elt z-list i) st-z) (- (elt x-list i) st-x)))
+            (setf (elt z-x-list i) (+ (* (- (elt z-list i) st-z) (elt uv 0)) (* (- (elt x-list i) st-x) (elt uv 1)))))
+
+          ;(setq tmp-v list (- *z-param* st-z) (- est-x st-x)))
+          (setq meet_zx (+ (* (- *z-param* st-z) (elt uv 0)) (* (- est-x st-x) (elt uv 1))))
+
+          ;(setq z-x-list (listsqrt (listsum (listcross x-list x-list) (listcross z-list z-list))))
           (setq y_quadreg (quadratic_regression z-x-list y-list))
-          (setq est-y (+ (+ (* (car y_quadreg) (* meet_zx meet_zx)) (* (cadr y_quadreg) meet_zx)) (caddr u_quadreg)))
+          (setq est-y (+ (+ (* (car y_quadreg) (* meet_zx meet_zx)) (* (cadr y_quadreg) meet_zx)) (caddr y_quadreg)))
+
+          (print "estimate-y")
+          (print est-y)
 
           (setq msg (instance geometry_msgs::Point :init
                               :x est-x
