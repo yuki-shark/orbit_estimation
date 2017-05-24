@@ -2,6 +2,7 @@
 
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
+(load "math.l")
 
 (setq *z-param* 100)
 
@@ -41,9 +42,9 @@
         (print ";; msg received~%")
         (print (length x-list))
 
-        (when (> (length x-list) 10)
+        (when (> (length x-list) 3)
 
-          (when (> (length x-list) 20)
+          (when (> (length x-list) 5)
             (setq tmp (reverse x-list))
             (pop tmp)
             (setq x-list (reverse tmp))
@@ -75,13 +76,10 @@
             (push 0.0 z-x-list))
 
           (dotimes (i (length x-list))
-            ;(setq tmp-v (list (- (elt z-list i) st-z) (- (elt x-list i) st-x)))
             (setf (elt z-x-list i) (+ (* (- (elt z-list i) st-z) (elt uv 0)) (* (- (elt x-list i) st-x) (elt uv 1)))))
 
-          ;(setq tmp-v list (- *z-param* st-z) (- est-x st-x)))
           (setq meet_zx (+ (* (- *z-param* st-z) (elt uv 0)) (* (- est-x st-x) (elt uv 1))))
 
-          ;(setq z-x-list (listsqrt (listsum (listcross x-list x-list) (listcross z-list z-list))))
           (setq y_quadreg (quadratic_regression z-x-list y-list))
           (setq est-y (+ (+ (* (car y_quadreg) (* meet_zx meet_zx)) (* (cadr y_quadreg) meet_zx)) (caddr y_quadreg)))
 
