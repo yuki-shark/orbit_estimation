@@ -79,6 +79,8 @@
       (when (or *left-msg* *right-msg*)
         (when *left-msg*
             (setq left_m *left-msg*)
+            (setq header (send left_m :header))
+
             (when (send left_m :moments)
               (setq max 0)
               (setq max_num 0)
@@ -125,7 +127,7 @@
           (when (c-isnan mean_y)
             ;;
           )
-          (setq header (send sp1 :header))
+          ;(setq header (send sp1 :header))
           (send sp1 :point :y mean_y)
           (send sp2 :point :y mean_y)
           (print (send sp1 :point :y))

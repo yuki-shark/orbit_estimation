@@ -13,13 +13,13 @@
 (defun orbit-estimate ()
   (ros::roseus "orbit-estimate")
   (ros::advertise "hit_point"
-                  geometry_msgs::Point)
+                  geometry_msgs::PointStamped)
 
   (ros::subscribe "/centroid_calc_from_stereo_image"
                   geometry_msgs::PointStamped
                   #'callback-coordinate 1)
 
-  (let (x-list y-list z-list z-x-list coordinate tmp uv)
+  (let (x-list y-list z-list z-x-list coordinate tmp uv header)
 
     (setq x-list (list ))
     (setq y-list (list ))
@@ -37,6 +37,7 @@
           (push (send coordinate :point :x) x-list)
           (push (send coordinate :point :y) y-list)
           (push (send coordinate :point :z) z-list)
+          (setq header (send coordinate :header))
           )
 
         (print ";; msg received~%")
@@ -86,10 +87,13 @@
           (print "estimate-y")
           (print est-y)
 
-          (setq msg (instance geometry_msgs::Point :init
-                              :x est-x
-                              :y est-y
-                              :z *z-param*))
+          (setq msg (instance geometry_msgs::PointStamped :init
+                              :header header
+                              :point
+                              (instance geometry_msgs::Point :init
+                                        :x est-x
+                                        :y est-y
+                                        :z *z-param*)))
           (ros::publish "hit_point" msg)
 
           (setq *coordinate-msg* nil)
