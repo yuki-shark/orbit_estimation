@@ -44,7 +44,7 @@
 
         (when (> (length x-list) 3)
 
-          (when (> (length x-list) 5)
+          (when (> (length x-list) 7)
             (setq tmp (reverse x-list))
             (pop tmp)
             (setq x-list (reverse tmp))
@@ -92,7 +92,7 @@
                               :z *z-param*))
           (ros::publish "hit_point" msg)
 
-          (setq coordinate nil)
+          (setq *coordinate-msg* nil)
           )
         )
       (unix::usleep (* 1000 10));; 10ms
