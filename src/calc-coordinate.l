@@ -78,6 +78,9 @@
 
     (send c1 :assoc c2)
 
+    ;; (setq b-sp1 nil)
+    ;; (setq b-sp2 nil)
+
     (while (ros::ok)
 
       ;; get object position in image coordinates
@@ -100,12 +103,32 @@
                   (setq max (send (nth i (send left_m :moments)) :area))
                   (setq max_num i)))
 
+              ;; (when b-sp1
+              ;;   (setq bx1 (send b-sp1 :point :x))
+              ;;   (setq by1 (send b-sp1 :point :y))
+              ;;   (dotimes (i left_len)
+              ;;     (setq cx1 (send (nth i (send left_m :moments)) :center :x))
+              ;;     (setq cy1 (send (nth i (send left_m :moments)) :center :y))
+              ;;     (setq dis1 (+ (* (- bx1 cx1) (- bx1 cx1)) (* (- by1 cy1) (- by1 cy1))))
+              ;;     (when (> (* (send (nth i (send left_m :moments)) :area) (/ 1.0 dis1)) max)
+              ;;       (setq max (send (nth i (send left_m :moments)) :area))
+              ;;       (setq max_num i))))
+
+              ;; (when (not b-sp1)
+              ;;   (dotimes (i left_len)
+              ;;   (when (> (send (nth i (send left_m :moments)) :area) max)
+              ;;     (setq max (send (nth i (send left_m :moments)) :area))
+              ;;     (setq max_num i))))
+
               (setq sp1 (instance opencv_apps::Point2DStamped :init
                                   :point
                                   (send (nth max_num (send left_m :moments)) :center)))
               (print "sp1")
               (print (send sp1 :point :x))
               (print (send sp1 :point :y))
+
+              ;; (setq b-sp1 sp1)
+
               (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
                                    :type image_view2::ImageMarker2::*circle*
                                    :scale 10 :width 2)))
@@ -126,12 +149,32 @@
                   (setq max (send (nth i (send right_m :moments)) :area))
                   (setq max_num i)))
 
+              ;; (when b-sp2
+              ;;   (setq bx2 (send b-sp2 :point :x))
+              ;;   (setq by2 (send b-sp2 :point :y))
+              ;;   (dotimes (i right_len)
+              ;;     (setq cx2 (send (nth i (send right_m :moments)) :center :x))
+              ;;     (setq cy2 (send (nth i (send right_m :moments)) :center :y))
+              ;;     (setq dis2 (+ (* (- bx2 cx2) (- bx2 cx2)) (* (- by2 cy2) (- by2 cy2))))
+              ;;     (when (> (* (send (nth i (send right_m :moments)) :area) (/ 1.0 dis2)) max)
+              ;;       (setq max (send (nth i (send right_m :moments)) :area))
+              ;;       (setq max_num i))))
+
+              ;; (when (not b-sp2)
+              ;;   (dotimes (i right_len)
+              ;;   (when (> (send (nth i (send right_m :moments)) :area) max)
+              ;;     (setq max (send (nth i (send right_m :moments)) :area))
+              ;;     (setq max_num i))))
+
               (setq sp2 (instance opencv_apps::Point2DStamped :init
                                   :point
                                   (send (nth max_num (send right_m :moments)) :center)))
               (print "sp2")
               (print (send sp2 :point :x))
               (print (send sp2 :point :y))
+
+              ;; (setq b-sp2 sp2)
+
               (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
                                    :type image_view2::ImageMarker2::*circle*
                                    :scale 10 :width 2)))
@@ -164,7 +207,7 @@
                                   (send sp1 :point :y)))
           (setq sp2 (float-vector (send sp2 :point :x)
                                   (send sp2 :point :y)))
-          ;;(pprint (list sp1 sp2))
+
           ;; get ray of found objects
           (setq r1 (send c1 :ray (elt sp1 0) (elt sp1 1)))
           (setq l1 (make-line (send c1 :worldpos) (v+ (send c1 :worldpos) (scale 5000 r1))))
@@ -175,7 +218,6 @@
             (unless (eq ln :parallel)
               (setq p (apply #'midpoint 0.5
                              (send l1 :common-perpendicular l2)))
-              ;(pprint p)
               (setq msg (instance geometry_msgs::PointStamped :init
                                   :header header
                                   :point
