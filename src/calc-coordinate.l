@@ -4,6 +4,7 @@
 
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
+(ros::roseus-add-msgs "image_view2")
 
 (defun callback-left (msg)
   (setq *left-msg* msg)
@@ -23,6 +24,22 @@
   (ros::roseus "calc-coordinate")
   (ros::advertise "centroid_calc_from_stereo_image"
                   geometry_msgs::PointStamped)
+  (ros::advertise "sp1"
+                  opencv_apps::Point2DStamped)
+  (ros::advertise "sp2"
+                  opencv_apps::Point2DStamped)
+  (ros::advertise "/left_image/image_marker"
+                  image_view2::ImageMarker2)
+  (ros::advertise "/right_image/image_marker"
+                  image_view2::ImageMarker2)
+
+  (ros::subscribe "/left_opencv_centroid/moments"
+                  opencv_apps::MomentArrayStamped
+                  #'callback-left)
+
+  (ros::subscribe "/right_opencv_centroid/moments"
+                  opencv_apps::MomentArrayStamped
+                  #'callback-right)
 
   (ros::subscribe "/pointgrey/left/camera_info"
                   sensor_msgs::camerainfo
@@ -30,7 +47,7 @@
   (ros::subscribe "/pointgrey/right/camera_info"
                   sensor_msgs::camerainfo
                   #'callback-right-camerainfo 1)
-
+  (unix::usleep (* 1000 1000))
   (let ((st (ros::time-now)))
     (while (not (and *left-camera-info*
                      *right-camera-info*))
@@ -61,14 +78,6 @@
 
     (send c1 :assoc c2)
 
-    (ros::subscribe "/left_opencv_centroid/moments"
-                    opencv_apps::MomentArrayStamped
-                    #'callback-left)
-
-    (ros::subscribe "/right_opencv_centroid/moments"
-                    opencv_apps::MomentArrayStamped
-                    #'callback-right)
-
     (while (ros::ok)
 
       ;; get object position in image coordinates
@@ -97,8 +106,14 @@
               (print "sp1")
               (print (send sp1 :point :x))
               (print (send sp1 :point :y))
+              (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
+                                   :type image_view2::ImageMarker2::*circle*
+                                   :scale 10 :width 2)))
+                (send msg-mk :position :x (send sp1 :point :x))
+                (send msg-mk :position :y (send sp1 :point :y))
+                (ros::publish "/left_image/image_marker" msg-mk)
+                )
               ))
-
         (when *right-msg*
             (setq right_m *right-msg*)
             (when (send right_m :moments)
@@ -117,6 +132,13 @@
               (print "sp2")
               (print (send sp2 :point :x))
               (print (send sp2 :point :y))
+              (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
+                                   :type image_view2::ImageMarker2::*circle*
+                                   :scale 10 :width 2)))
+                (send msg-mk :position :x (send sp2 :point :x))
+                (send msg-mk :position :y (send sp2 :point :y))
+                (ros::publish "/right_image/image_marker" msg-mk)
+                )
               ))
 
         (print ";; msg received~%")
@@ -132,6 +154,11 @@
           (send sp2 :point :y mean_y)
           (print (send sp1 :point :y))
           (print (send sp2 :point :y))
+
+          (setq sp1-x (send sp1 :point :x))
+          (setq sp1-y (send sp1 :point :y))
+          (setq sp2-x (send sp2 :point :x))
+          (setq sp2-y (send sp2 :point :y))
 
           (setq sp1 (float-vector (send sp1 :point :x)
                                   (send sp1 :point :y)))
@@ -157,6 +184,23 @@
                                             :y (elt p 1)
                                             :z (elt p 2))))
               (ros::publish "centroid_calc_from_stereo_image" msg)
+
+              (setq sp1-msg (instance opencv_apps::Point2DStamped :init
+                                  :header header
+                                  :point
+                                  (instance opencv_apps::Point2D :init
+                                            :x sp1-x
+                                            :y sp1-y)))
+
+              (setq sp2-msg (instance opencv_apps::Point2DStamped :init
+                                  :header header
+                                  :point
+                                  (instance opencv_apps::Point2D :init
+                                            :x sp2-x
+                                            :y sp2-y)))
+
+              (ros::publish "sp1" sp1-msg)
+              (ros::publish "sp2" sp2-msg)
               ))
           (setq sp1 nil)
           (setq sp2 nil)
@@ -167,6 +211,5 @@
     )
   )
 
-;(warn ";; run demo program~%")
 (warn "(calc-coordinate)~%")
 (calc-coordinate)
