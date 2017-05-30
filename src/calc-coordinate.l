@@ -95,11 +95,19 @@
 
             (when (send left_m :moments)
               (setq max 0)
-              (setq max_num 0)
+              (setq max_num -1)
               (setq left_len (length (send left_m :moments)))
 
+              ;; (dotimes (i left_len)
+              ;;   (when (> (send (nth i (send left_m :moments)) :area) max)
+              ;;     (setq max (send (nth i (send left_m :moments)) :area))
+              ;;     (setq max_num i)))
+
+              ;;mask_image for 316.bag
               (dotimes (i left_len)
-                (when (> (send (nth i (send left_m :moments)) :area) max)
+                (when (and (> (send (nth i (send left_m :moments)) :area) max)
+                           (> (send (nth i (send left_m :moments)) :center :x) 640)
+                           (< (send (nth i (send left_m :moments)) :center :y) 1500))
                   (setq max (send (nth i (send left_m :moments)) :area))
                   (setq max_num i)))
 
@@ -120,32 +128,42 @@
               ;;     (setq max (send (nth i (send left_m :moments)) :area))
               ;;     (setq max_num i))))
 
-              (setq sp1 (instance opencv_apps::Point2DStamped :init
-                                  :point
-                                  (send (nth max_num (send left_m :moments)) :center)))
-              (print "sp1")
-              (print (send sp1 :point :x))
-              (print (send sp1 :point :y))
+              (when (> max_num -1)
+                (setq sp1 (instance opencv_apps::Point2DStamped :init
+                                    :point
+                                    (send (nth max_num (send left_m :moments)) :center)))
+                (print "sp1")
+                (print (send sp1 :point :x))
+                (print (send sp1 :point :y))
 
               ;; (setq b-sp1 sp1)
 
-              (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
-                                   :type image_view2::ImageMarker2::*circle*
-                                   :scale 10 :width 2)))
-                (send msg-mk :position :x (send sp1 :point :x))
-                (send msg-mk :position :y (send sp1 :point :y))
-                (ros::publish "/left_image/image_marker" msg-mk)
+                (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
+                                        :type image_view2::ImageMarker2::*circle*
+                                        :scale 10 :width 2)))
+                  (send msg-mk :position :x (send sp1 :point :x))
+                  (send msg-mk :position :y (send sp1 :point :y))
+                  (ros::publish "/left_image/image_marker" msg-mk)
+                  )
                 )
               ))
         (when *right-msg*
             (setq right_m *right-msg*)
             (when (send right_m :moments)
               (setq max 0)
-              (setq max_num 0)
+              (setq max_num -1)
               (setq right_len (length (send right_m :moments)))
 
+              ;; (dotimes (i right_len)
+              ;;   (when (> (send (nth i (send right_m :moments)) :area) max)
+              ;;     (setq max (send (nth i (send right_m :moments)) :area))
+              ;;     (setq max_num i)))
+
+              ;;mask_image for 316.bag
               (dotimes (i right_len)
-                (when (> (send (nth i (send right_m :moments)) :area) max)
+                (when (and (> (send (nth i (send right_m :moments)) :area) max)
+                           (> (send (nth i (send right_m :moments)) :center :x) 640)
+                           (< (send (nth i (send right_m :moments)) :center :y) 1500))
                   (setq max (send (nth i (send right_m :moments)) :area))
                   (setq max_num i)))
 
@@ -166,21 +184,23 @@
               ;;     (setq max (send (nth i (send right_m :moments)) :area))
               ;;     (setq max_num i))))
 
-              (setq sp2 (instance opencv_apps::Point2DStamped :init
-                                  :point
-                                  (send (nth max_num (send right_m :moments)) :center)))
-              (print "sp2")
-              (print (send sp2 :point :x))
-              (print (send sp2 :point :y))
+              (when (> max_num -1)
+                (setq sp2 (instance opencv_apps::Point2DStamped :init
+                                    :point
+                                    (send (nth max_num (send right_m :moments)) :center)))
+                (print "sp2")
+                (print (send sp2 :point :x))
+                (print (send sp2 :point :y))
 
               ;; (setq b-sp2 sp2)
 
-              (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
-                                   :type image_view2::ImageMarker2::*circle*
-                                   :scale 10 :width 2)))
-                (send msg-mk :position :x (send sp2 :point :x))
-                (send msg-mk :position :y (send sp2 :point :y))
-                (ros::publish "/right_image/image_marker" msg-mk)
+                (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
+                                        :type image_view2::ImageMarker2::*circle*
+                                        :scale 10 :width 2)))
+                  (send msg-mk :position :x (send sp2 :point :x))
+                  (send msg-mk :position :y (send sp2 :point :y))
+                  (ros::publish "/right_image/image_marker" msg-mk)
+                  )
                 )
               ))
 
