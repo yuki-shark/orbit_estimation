@@ -90,10 +90,9 @@
           (setq msg (instance geometry_msgs::PointStamped :init
                               :header header
                               :point
-                              (instance geometry_msgs::Point :init
-                                        :x est-x
-                                        :y est-y
-                                        :z *z-param*)))
+                              (ros::pos->tf-point
+                               (float-vector est-x est-y *z-param*))))
+
           (ros::publish "hit_point" msg)
 
           (setq *coordinate-msg* nil)
