@@ -1,6 +1,6 @@
 #!/usr/bin/env roseus
 
-;(load "package://roseus/euslisp/roseus-utils.l")
+(setq *use-file* 0)
 
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
@@ -19,6 +19,11 @@
   (setq *left-camera-info* msg))
 (defun callback-right-camerainfo (msg)
   (setq *right-camera-info* msg))
+
+(when (eq *use-file* 0)
+  (setq *value* (list 0 1024)))
+(when (eq *use-file* 316)
+  (setq *value* (list 700 700)))
 
 (defun calc-coordinate ()
   (ros::roseus "calc-coordinate")
@@ -78,14 +83,13 @@
 
     (send c1 :assoc c2)
 
-    ;; (setq b-sp1 nil)
-    ;; (setq b-sp2 nil)
-
     (while (ros::ok)
 
       ;; get object position in image coordinates
       (setq *left-msg* nil)
       (setq *right-msg* nil)
+      (setq sp1 nil)
+      (setq sp2 nil)
       (ros::spin-once)
 
       (when (or *left-msg* *right-msg*)
@@ -98,37 +102,14 @@
               (setq max_num -1)
               (setq left_len (length (send left_m :moments)))
 
-              ;; (dotimes (i left_len)
-              ;;   (when (> (send (nth i (send left_m :moments)) :area) max)
-              ;;     (setq max (send (nth i (send left_m :moments)) :area))
-              ;;     (setq max_num i)))
-
-              ;;mask_image for 316.bag
               (dotimes (i left_len)
                 (let* ((moment-nth-i (nth i (send left_m :moments))))
                   (when (and (not (c-isnan (send moment-nth-i :center :x)))
                              (> (send moment-nth-i :area) max)
-                             (> (send moment-nth-i :center :x) 700)
-                             (< (send moment-nth-i :center :y) 700))
+                             (> (send moment-nth-i :center :x) (car *value*))
+                             (< (send moment-nth-i :center :y) (cadr *value*)))
                   (setq max (send moment-nth-i :area))
                   (setq max_num i))))
-
-              ;; (when b-sp1
-              ;;   (setq bx1 (send b-sp1 :point :x))
-              ;;   (setq by1 (send b-sp1 :point :y))
-              ;;   (dotimes (i left_len)
-              ;;     (setq cx1 (send (nth i (send left_m :moments)) :center :x))
-              ;;     (setq cy1 (send (nth i (send left_m :moments)) :center :y))
-              ;;     (setq dis1 (+ (* (- bx1 cx1) (- bx1 cx1)) (* (- by1 cy1) (- by1 cy1))))
-              ;;     (when (> (* (send (nth i (send left_m :moments)) :area) (/ 1.0 dis1)) max)
-              ;;       (setq max (send (nth i (send left_m :moments)) :area))
-              ;;       (setq max_num i))))
-
-              ;; (when (not b-sp1)
-              ;;   (dotimes (i left_len)
-              ;;   (when (> (send (nth i (send left_m :moments)) :area) max)
-              ;;     (setq max (send (nth i (send left_m :moments)) :area))
-              ;;     (setq max_num i))))
 
               (when (> max_num -1)
                 (setq sp1 (instance opencv_apps::Point2DStamped :init
@@ -137,8 +118,6 @@
                 (print "sp1")
                 (print (send sp1 :point :x))
                 (print (send sp1 :point :y))
-
-              ;; (setq b-sp1 sp1)
 
                 (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
                                         :type image_view2::ImageMarker2::*circle*
@@ -156,37 +135,14 @@
               (setq max_num -1)
               (setq right_len (length (send right_m :moments)))
 
-              ;; (dotimes (i right_len)
-              ;;   (when (> (send (nth i (send right_m :moments)) :area) max)
-              ;;     (setq max (send (nth i (send right_m :moments)) :area))
-              ;;     (setq max_num i)))
-
-              ;;mask_image for 316.bag
               (dotimes (i right_len)
                 (let* ((moment-nth-i (nth i (send right_m :moments))))
                   (when (and (not (c-isnan (send moment-nth-i :center :x)))
                              (> (send moment-nth-i :area) max)
-                             (> (send moment-nth-i :center :x) 700)
-                             (< (send moment-nth-i :center :y) 700))
+                             (> (send moment-nth-i :center :x) (car *value*))
+                             (< (send moment-nth-i :center :y) (cadr *value*)))
                   (setq max (send moment-nth-i :area))
                   (setq max_num i))))
-
-              ;; (when b-sp2
-              ;;   (setq bx2 (send b-sp2 :point :x))
-              ;;   (setq by2 (send b-sp2 :point :y))
-              ;;   (dotimes (i right_len)
-              ;;     (setq cx2 (send (nth i (send right_m :moments)) :center :x))
-              ;;     (setq cy2 (send (nth i (send right_m :moments)) :center :y))
-              ;;     (setq dis2 (+ (* (- bx2 cx2) (- bx2 cx2)) (* (- by2 cy2) (- by2 cy2))))
-              ;;     (when (> (* (send (nth i (send right_m :moments)) :area) (/ 1.0 dis2)) max)
-              ;;       (setq max (send (nth i (send right_m :moments)) :area))
-              ;;       (setq max_num i))))
-
-              ;; (when (not b-sp2)
-              ;;   (dotimes (i right_len)
-              ;;   (when (> (send (nth i (send right_m :moments)) :area) max)
-              ;;     (setq max (send (nth i (send right_m :moments)) :area))
-              ;;     (setq max_num i))))
 
               (when (> max_num -1)
                 (setq sp2 (instance opencv_apps::Point2DStamped :init
@@ -195,8 +151,6 @@
                 (print "sp2")
                 (print (send sp2 :point :x))
                 (print (send sp2 :point :y))
-
-              ;; (setq b-sp2 sp2)
 
                 (let ((msg-mk (instance image_view2::ImageMarker2 :init :id 0
                                         :type image_view2::ImageMarker2::*circle*
@@ -268,8 +222,8 @@
               (ros::publish "sp1" sp1-msg)
               (ros::publish "sp2" sp2-msg)
               ))
-          (setq sp1 nil)
-          (setq sp2 nil)
+          ;(setq sp1 nil)
+          ;(setq sp2 nil)
           )
         )
       (unix::usleep (* 1000 10));; 10ms
