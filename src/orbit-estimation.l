@@ -43,9 +43,9 @@
         (print ";; msg received~%")
         (print (length x-list))
 
-        (when (> (length x-list) 3)
+        (when (> (length x-list) 7)
 
-          (when (> (length x-list) 7)
+          (when (> (length x-list) 10)
             (setq tmp (reverse x-list))
             (pop tmp)
             (setq x-list (reverse tmp))

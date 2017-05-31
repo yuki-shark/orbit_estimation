@@ -105,11 +105,13 @@
 
               ;;mask_image for 316.bag
               (dotimes (i left_len)
-                (when (and (> (send (nth i (send left_m :moments)) :area) max)
-                           (> (send (nth i (send left_m :moments)) :center :x) 640)
-                           (< (send (nth i (send left_m :moments)) :center :y) 1500))
-                  (setq max (send (nth i (send left_m :moments)) :area))
-                  (setq max_num i)))
+                (let* ((moment-nth-i (nth i (send left_m :moments))))
+                  (when (and (not (c-isnan (send moment-nth-i :center :x)))
+                             (> (send moment-nth-i :area) max)
+                             (> (send moment-nth-i :center :x) 700)
+                             (< (send moment-nth-i :center :y) 700))
+                  (setq max (send moment-nth-i :area))
+                  (setq max_num i))))
 
               ;; (when b-sp1
               ;;   (setq bx1 (send b-sp1 :point :x))
@@ -161,11 +163,13 @@
 
               ;;mask_image for 316.bag
               (dotimes (i right_len)
-                (when (and (> (send (nth i (send right_m :moments)) :area) max)
-                           (> (send (nth i (send right_m :moments)) :center :x) 640)
-                           (< (send (nth i (send right_m :moments)) :center :y) 1500))
-                  (setq max (send (nth i (send right_m :moments)) :area))
-                  (setq max_num i)))
+                (let* ((moment-nth-i (nth i (send right_m :moments))))
+                  (when (and (not (c-isnan (send moment-nth-i :center :x)))
+                             (> (send moment-nth-i :area) max)
+                             (> (send moment-nth-i :center :x) 700)
+                             (< (send moment-nth-i :center :y) 700))
+                  (setq max (send moment-nth-i :area))
+                  (setq max_num i))))
 
               ;; (when b-sp2
               ;;   (setq bx2 (send b-sp2 :point :x))

@@ -13,7 +13,7 @@
   (ros::roseus "plot_estimate_data")
 
   (ros::subscribe "/hit_point"
-                  geometry_msgs::Point
+                  geometry_msgs::PointStamped
                   #'callback-point 1)
 
   (let (t-list x-list y-list )
@@ -40,8 +40,8 @@
         (when (> b-time time)
           (return nil))
 
-        (setq x (send *point-msg* :x))
-        (setq y (send *point-msg* :y))
+        (setq x (send *point-msg* :point :x))
+        (setq y (send *point-msg* :point :y))
 
         (push time t-list)
         (push x x-list)
