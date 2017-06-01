@@ -1,6 +1,6 @@
 #!/usr/bin/env roseus
 
-(setq *use-file* 0)
+(setq *use-file* 316)
 
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
@@ -88,8 +88,8 @@
       ;; get object position in image coordinates
       (setq *left-msg* nil)
       (setq *right-msg* nil)
-      (setq sp1 nil)
-      (setq sp2 nil)
+      ;(setq sp1 nil)
+      ;(setq sp2 nil)
       (ros::spin-once)
 
       (when (or *left-msg* *right-msg*)
@@ -222,8 +222,8 @@
               (ros::publish "sp1" sp1-msg)
               (ros::publish "sp2" sp2-msg)
               ))
-          ;(setq sp1 nil)
-          ;(setq sp2 nil)
+          (setq sp1 nil)
+          (setq sp2 nil)
           )
         )
       (unix::usleep (* 1000 10));; 10ms
