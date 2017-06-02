@@ -3,7 +3,7 @@
 ;(ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
 
-(defun test_data2 (*z-param* *error*)
+(defun test_data2 (*z-param* *error* *hz*)
   (ros::roseus "test_data2")
   (ros::advertise "centroid_calc_from_stereo_image"
                   geometry_msgs::PointStamped)
@@ -25,6 +25,8 @@
     (setq cs (* (- 10000 *z-param*) (/ 1.0 vz)))
     (setq cy (+ (+ (* (* 0.5 g) (* cs cs)) (* vy cs)) h))
 
+    (setq frame (* 1000 (/ 1.0 *hz*)))
+
     (while (ros::ok)
 
       (ros::spin-once)
@@ -33,7 +35,8 @@
       (setq s 0)
       (while (> 1000 s)
 
-        (setq ds (+ 30 (random 40)))
+        (setq ds (+ (* 0.6 frame) (random (* 0.8 frame))))
+        (setq ds (round ds))
         (setq s (+ s ds))
         ;; (setq tmp (+ s ds))
         ;; (setq s tmp)
@@ -77,4 +80,5 @@
 )
 
 ;(warn "(test_data2)~%")
-(test_data2 100 100)
+;; *zparam* *error* *hz*
+(test_data2 100 10 10)
