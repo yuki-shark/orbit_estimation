@@ -81,4 +81,4 @@
 
 ;(warn "(test_data2)~%")
 ;; *zparam* *error* *hz*
-(test_data2 100 10 10)
+(test_data2 1000 10 10)
