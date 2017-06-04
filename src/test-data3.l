@@ -30,7 +30,7 @@
     (while (not *left-camera-info*)
       (when (> (send (ros::time- (ros::time-now) st) :to-sec) 10.0)
         (warn ";; timeout, camera-info not found~%")
-        (return-from tese_data3 nil))
+        (return-from test_data3 nil))
       (unix::usleep (* 1000 100));; sleep 100 ms
       (ros::spin-once)
       )
