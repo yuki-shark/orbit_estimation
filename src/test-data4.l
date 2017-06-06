@@ -33,6 +33,9 @@
       (setq y (+ *y-param* (* *radius* (sin rad))))
       (setq z *z-param*)
 
+      (setq point-vector
+            (float-vector x y z))
+
       (print "publish data")
       (format t "x: ~A   y: ~A   z: ~A~%" x y z)
 
@@ -41,11 +44,9 @@
                           (instance std_msgs::header :init
                                     :stamp (ros::time-now)
                                     :frame_id "left")
-                          :point
-                          (instance geometry_msgs::Point :init
-                                    :x x
-                                    :y y
-                                    :z z)))
+                          :point (ros::pos->tf-point point-vector)
+                          ))
+
       (ros::publish "centroid_calc_from_stereo_image" msg)
 
       (unix::usleep (* 1000 ds));; ds s
