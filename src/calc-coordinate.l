@@ -1,6 +1,6 @@
 #!/usr/bin/env roseus
 
-(setq *use-file* 316)
+(setq *use-file* 0)
 
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")
@@ -166,7 +166,7 @@
 
         ;;calc mean_y
         (when (and sp1 sp2)
-          (setq mean_y (+ (send sp1 :point :y) (send sp2 :point :y)))
+          (setq mean_y (/ (+ (send sp1 :point :y) (send sp2 :point :y)) 2.0))
           (when (c-isnan mean_y)
             ;;
           )
@@ -200,9 +200,9 @@
                                   :header header
                                   :point
                                   (instance geometry_msgs::Point :init
-                                            :x (elt p 0)
-                                            :y (elt p 1)
-                                            :z (elt p 2))))
+                                            :x (* (elt p 0) 0.001)
+                                            :y (* (elt p 1) 0.001)
+                                            :z (* (elt p 2) 0.001))))
               (ros::publish "centroid_calc_from_stereo_image" msg)
 
               (setq sp1-msg (instance opencv_apps::Point2DStamped :init
