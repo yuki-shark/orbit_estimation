@@ -20,7 +20,7 @@
                   geometry_msgs::PointStamped
                   #'callback-point 1)
 
-  (ros::subscribe "/correct_data5"
+  (ros::subscribe "/correct_data6"
                   geometry_msgs::Point
                   #'callback-c-point 1)
 
@@ -79,16 +79,16 @@
     (setq t-list (mapcar #'(lambda (tm) (- tm (car t-list)))
                          (nreverse t-list)))
     (graph-view
-     (list (reverse y-list)
-           ;;(reverse y-list)
+     (list (reverse x-list)
+           (reverse y-list)
+           (reverse cx-list)
            (reverse cy-list)
-           ;;(reverse cy-list)
            )
      t-list
      :keylist (list "x-list"
-                    ;;"y-list"
+                    "y-list"
                     "cx-list"
-                    ;;"cy-list"
+                    "cy-list"
                     ))
 
     (print "write graph")
