@@ -71,7 +71,9 @@
      :keylist (list "x-list"
                     "y-list"
                     "z-list"
-                    ))
+                    )
+     :dump-graph "hoge.eps"
+     :dump-graph t)
 
     (print "write graph")
     )

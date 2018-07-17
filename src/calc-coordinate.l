@@ -1,6 +1,6 @@
 #!/usr/bin/env roseus
 
-(setq *use-file* 0)
+(setq *use-file* 316)
 
 (ros::roseus-add-msgs "opencv_apps")
 (ros::roseus-add-msgs "sensor_msgs")

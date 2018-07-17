@@ -40,8 +40,8 @@
         (when (> b-time time)
           (return nil))
 
-        (setq x (send *point-msg* :point :x))
-        (setq y (send *point-msg* :point :y))
+        (setq x (* 1000 (send *point-msg* :point :x)))
+        (setq y (* 1000 (send *point-msg* :point :y)))
 
         (push time t-list)
         (push x x-list)
@@ -59,12 +59,27 @@
     (setq t-list (mapcar #'(lambda (tm) (- tm (car t-list)))
                          (nreverse t-list)))
     (graph-view
-     (list (reverse x-list)
-           (reverse y-list)
+     (list (reverse y-list)
+           ;;(reverse y-list)
            )
      t-list
-     :keylist (list "x-list"
-                    "y-list"))
+     :keylist (list "y"
+                    ;;"y-list"
+                    )
+     ;;:dump-graph "est_x.eps"
+     :dump-graph t
+     )
+
+    ;; (graph-view
+    ;;  (list ;;(reverse x-list)
+    ;;        (reverse y-list)
+    ;;        )
+    ;;  t-list
+    ;;  :keylist (list ;;"x-list"
+    ;;                 "y"
+    ;;                 )
+    ;;  :dump-graph "est_y.eps"
+    ;;  :dump-graph t)
 
     (print "write graph")
     )

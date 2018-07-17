@@ -4,7 +4,7 @@
 (ros::roseus-add-msgs "sensor_msgs")
 (load "math.l")
 
-(setq *z-param* 1000)
+(setq *z-param* 1)
 
 (defun callback-coordinate (msg)
   (setq *coordinate-msg* msg)
